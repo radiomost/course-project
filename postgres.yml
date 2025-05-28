@@ -1,0 +1,43 @@
+---
+- name: postgres
+  gather_facts: false
+  hosts: base
+  vars:
+    ansible_ssh_user: user
+  become: yes
+
+  pre_tasks:
+    - name: Validating the ssh port is open and
+      wait_for:
+        host: "{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}"
+        port: 22
+        delay: 5
+        timeout: 300
+        state: started
+        search_regex: OpenSSH
+        
+  tasks:
+    - name: Обновить кэш apt
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    - name: Установить PostgreSQL
+      package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - postgresql
+        - postgresql-client
+
+    - name: Проверка что PostgreSQL запущен и в автозагрузке
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Проверка состояния службы PostgreSQL
+      service_facts:
+
+    - name: Показать статус службы PostgreSQL
+      debug:
+        var: ansible_facts.services['postgresql.service'].state
