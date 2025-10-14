@@ -1,0 +1,60 @@
+---
+- name: Установить nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+- name: Создать директорию сайта
+  ansible.builtin.file:
+    path: /var/www/netlog
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Разместить тестовый index.html
+  ansible.builtin.copy:
+    dest: /var/www/netlog/index.html
+    content: "<h1>Welcome to Netlog</h1>"
+    owner: www-data
+    group: www-data
+    mode: '0644'
+
+- name: Скопировать основной nginx.conf
+  ansible.builtin.copy:
+    src: conf/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: user
+    group: user
+    mode: '0644'
+  notify: Restart nginx
+
+- name: Скопировать конфигурацию сайта netlog.ru
+  ansible.builtin.copy:
+    src: conf/netlog.ru.conf
+    dest: /etc/nginx/sites-available/netlog.ru.conf
+    owner: user
+    group: user
+    mode: '0644'
+  notify: Restart nginx
+
+- name: Создать симлинк в sites-enabled
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/netlog.ru.conf
+    dest: /etc/nginx/sites-enabled/netlog.ru.conf
+    state: link
+    force: yes
+  notify: Restart nginx
+
+- name: Проверить конфигурацию Nginx
+  ansible.builtin.command: nginx -t
+  register: nginx_test
+  changed_when: false
+  failed_when: nginx_test.rc != 0
+
+- name: Убедиться, что nginx запущен и включен
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes

@@ -1,64 +1,30 @@
-+++TEST!!!!!!
+Создать сервисный аккаунт в облаке. Выдать права editor
+Выпустить авторизованный ключ для этого аккаунта и скачать его по пути ~/.authorized_key.json .
+Вписать в переменные cloud_id и folder_id в variables.tf
+Изменить ssh-ключ в файле cloud-init.yml (ssh-keygen -t ed25519). cp terraformrc ~/.terraformrc
+terraform init && terraform apply
+rm ~/.ssh/known_hosts. Выполнить playbook ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./hosts.ini test.yml
+По окончании выполнить terraform destroy
+https://www.jeffgeerling.com/blog/2022/using-ansible-playbook-ssh-bastion-jump-host
 
-✅ Сборка образа CloudInit
-🔧 Цель:
-Создать новый .qcow2-образ на основе официального Ubuntu Cloud Image, но с уже установленным пакетом qemu-guest-agent.
+Настройка доступа по ssh через ssh config: ~/.ssh/config
 
-🧰 Что потребуется:
-Linux-система с утилитами:
+Host 89.169.142.236  #адрес вашего бастиона
+   User user
 
-qemu-utils
+Host 10.0.*
+        ProxyJump 89.169.142.236
+        User user
 
-libguestfs-tools (guestfish, virt-customize)
+Host *.ru-central1.internal
+        ProxyJump 89.169.142.236
+        User user
 
-wget
+Или более простой для понимания, но менее удобный для частого применения: ssh -J
 
-Образ Ubuntu:
 
-Например: jammy-server-cloudimg-amd64.img
 
-🪛 Шаги
-1. Установи необходимые инструменты:
 
-```bash
-sudo apt update
-sudo apt install libguestfs-tools qemu-utils wget
-```
-2. Сделай исполняемым:
-```bash
-chmod +x build-cloudimg-with-agent.sh
-```
-3. Запусти:
-```bash
-./build-cloudimg-with-agent.sh
-```
-📦 Результат
-Готовый .qcow2-файл: ubuntu-jammy-cloudinit-qemu-agent.qcow2
-Полностью совместим с Proxmox Cloud-Init
-Не требует запуска виртуальной машины для установки агента.
 
-Загрузи его в Proxmox
-
-✅ Создание template CloudInit
-Скрипт create-cloudinit-template.sh запускается непосредственно на хосте Proxmox.
-Незабудь корректно указать путь до хранилища.
-
-```bash
-chmod +x create-cloudinit-template.sh
-./create-cloudinit-template.sh
-```
-
-✅ Запуск Terraform
-
-Праверка плана
-```bash
-terraform plan -var-file="variables.tfvars"
-```
-Создание окружения. Запуск
-```bash
-terraform apply -var-file="variables.tfvars"
-```
-Удаление созданного окружения.
-```bash
-terraform destroy -var-file="variables.tfvars"
-```
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ./hosts.ini nginx_install.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible -i hosts.ini all -m ping -vvv
