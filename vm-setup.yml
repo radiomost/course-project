@@ -5,9 +5,34 @@
   become: true
   roles:
     - nginx
+  vars:
+    nginx_conf_src: "netlog.ru.conf"   # значение по умолчанию
 
   handlers:
     - name: Restart nginx
       ansible.builtin.service:
         name: nginx
         state: restarted
+
+- name: Установка и настройка Nginx на bastion
+  hosts: bastion
+  remote_user: user
+  become: true
+  roles:
+    - role: nginx
+      tags: bastion
+  vars:
+    nginx_conf_src: "nginx_bastion.conf"   # значение по умолчанию
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+
+- name: Установка и настройка Prometheus
+  hosts: prometheus
+  remote_user: user
+  become: true
+  roles:
+    - prometheus

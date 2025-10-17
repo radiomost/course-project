@@ -4,6 +4,8 @@
     name: nginx
     state: present
     update_cache: yes
+  tags:
+    - bastion
 
 - name: Создать директорию сайта
   ansible.builtin.file:
@@ -29,23 +31,30 @@
     group: user
     mode: '0644'
   notify: Restart nginx
+ 
 
-- name: Скопировать конфигурацию сайта netlog.ru
+- name: Скопировать конфигурацию Proxy
   ansible.builtin.copy:
-    src: conf/netlog.ru.conf
-    dest: /etc/nginx/sites-available/netlog.ru.conf
+    src: conf/{{ nginx_conf_src }}
+    dest: /etc/nginx/sites-available/{{ nginx_conf_src }}
     owner: user
     group: user
     mode: '0644'
   notify: Restart nginx
+  tags:
+    - bastion
+
 
 - name: Создать симлинк в sites-enabled
   ansible.builtin.file:
-    src: /etc/nginx/sites-available/netlog.ru.conf
-    dest: /etc/nginx/sites-enabled/netlog.ru.conf
+    src: /etc/nginx/sites-available/{{ nginx_conf_src }}
+    dest: /etc/nginx/sites-enabled/{{ nginx_conf_src }}
     state: link
     force: yes
   notify: Restart nginx
+  tags:
+    - bastion
+
 
 - name: Проверить конфигурацию Nginx
   ansible.builtin.command: nginx -t

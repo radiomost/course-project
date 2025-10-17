@@ -252,21 +252,26 @@ resource "yandex_compute_instance" "grafana" {
 resource "local_file" "inventory" {
   content  = <<-XYZ
   [bastion]
-  ${yandex_compute_instance.bastion.network_interface.0.nat_ip_address}
+  bastion ansible_host=${yandex_compute_instance.bastion.network_interface.0.nat_ip_address}
 
   [infra]
-  ${yandex_compute_instance.elastic.network_interface.0.ip_address}
-  ${yandex_compute_instance.prometheus.network_interface.0.ip_address}
-  ${yandex_compute_instance.kibana.network_interface.0.ip_address}
-  ${yandex_compute_instance.grafana.network_interface.0.ip_address}
+  elastic ansible_host=${yandex_compute_instance.elastic.network_interface.0.ip_address}
+  prometheus ansible_host=${yandex_compute_instance.prometheus.network_interface.0.ip_address}
+  kibana ansible_host=${yandex_compute_instance.kibana.network_interface.0.ip_address}
+  grafana ansible_host=${yandex_compute_instance.grafana.network_interface.0.ip_address}
 
   [webservers]
-  ${yandex_compute_instance.web_a.network_interface.0.ip_address}
-  ${yandex_compute_instance.web_b.network_interface.0.ip_address}
+  web_a ansible_host=${yandex_compute_instance.web_a.network_interface.0.ip_address}
+  web_b ansible_host=${yandex_compute_instance.web_b.network_interface.0.ip_address}
   
   [webservers:vars]
   ansible_user=user
   ansible_ssh_common_args='-o ProxyCommand="ssh -p 22 -W %h:%p -q user@${yandex_compute_instance.bastion.network_interface.0.nat_ip_address}"'
+
+  [infra:vars]
+  ansible_user=user
+  ansible_ssh_common_args='-o ProxyCommand="ssh -p 22 -W %h:%p -q user@${yandex_compute_instance.bastion.network_interface.0.nat_ip_address}"'
+
   XYZ
   filename = "./hosts.ini"
 }
