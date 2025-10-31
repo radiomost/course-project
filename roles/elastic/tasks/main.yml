@@ -11,35 +11,23 @@
     state: present
     update_cache: yes
 
-# - name: Добавить GPG ключ Elasticsearch
-#   ansible.builtin.apt_key:
-#     url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
-#     state: present
-
-# - name: Добавить репозиторий Elasticsearch
-#   ansible.builtin.apt_repository:
-#     repo: "deb https://artifacts.elastic.co/packages/8.x/apt stable main"
-#     state: present
-
-# - name: Обновить apt cache
-#   ansible.builtin.apt:
-#     update_cache: yes
-
-- name: Скопировать локальный пакет Elasticsearch на сервер
-  ansible.builtin.copy:
-    src: elasticsearch-9.2.0-amd64.deb
+- name: Скачать пакет Grafana с удаленного сервера
+  ansible.builtin.get_url:
+    url: https://www.autokernel.ru/repository/images_raw/elasticsearch/elasticsearch-9.2.0-amd64.deb
     dest: /tmp/elasticsearch-9.2.0-amd64.deb
     mode: '0644'
+    force: yes   # перезаписывать, если файл уже существует
+
+# - name: Скопировать локальный пакет Elasticsearch на сервер
+#   ansible.builtin.copy:
+#     src: elasticsearch-9.2.0-amd64.deb
+#     dest: /tmp/elasticsearch-9.2.0-amd64.deb
+#     mode: '0644'
 
 - name: Установить Elasticsearch через dpkg
   ansible.builtin.apt:
     deb: /tmp/elasticsearch-9.2.0-amd64.deb
     state: present
-
-# - name: Установить Elasticsearch
-#   ansible.builtin.apt:
-#     name: elasticsearch
-#     state: present
 
 - name: Создать пользователя elasticsearch (если не создан)
   ansible.builtin.user:

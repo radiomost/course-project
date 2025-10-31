@@ -5,11 +5,18 @@
     state: present
     update_cache: yes
 
-- name: Скопировать локальный пакет Filebeat на сервер
-  ansible.builtin.copy:
-    src: filebeat-9.2.0-amd64.deb
+- name: Скачать пакет Grafana с удаленного сервера
+  ansible.builtin.get_url:
+    url: https://www.autokernel.ru/repository/images_raw/filebeat/filebeat-9.2.0-amd64.deb
     dest: /tmp/filebeat-9.2.0-amd64.deb
     mode: '0644'
+    force: yes   # перезаписывать, если файл уже существует
+
+# - name: Скопировать локальный пакет Filebeat на сервер
+#   ansible.builtin.copy:
+#     src: filebeat-9.2.0-amd64.deb
+#     dest: /tmp/filebeat-9.2.0-amd64.deb
+#     mode: '0644'
 
 - name: Установить Filebeat через dpkg
   ansible.builtin.apt:
