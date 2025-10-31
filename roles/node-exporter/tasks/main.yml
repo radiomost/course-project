@@ -1,0 +1,48 @@
+---
+# Установка Node Exporter на Linux
+
+- name: Скачиваем Node Exporter
+  ansible.builtin.get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v1.10.2/node_exporter-1.10.2.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter.tar.gz"
+    mode: '0644'
+  register: download_node
+  until: download_node is succeeded
+  retries: 3
+  delay: 5
+
+- name: Распаковать Node Exporter
+  ansible.builtin.unarchive:
+    src: /tmp/node_exporter.tar.gz
+    dest: /usr/local/bin/
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+
+- name: Создать системного пользователя node_exporter
+  ansible.builtin.user:
+    name: "{{ exporter_user }}"
+    shell: /sbin/nologin
+    system: yes
+    create_home: no
+
+- name: Установить права на бинарник
+  ansible.builtin.file:
+    path: /usr/local/bin/node_exporter
+    owner: "{{ exporter_user }}"
+    group: "{{ exporter_user }}"
+    mode: '0755'
+
+- name: Скопировать systemd unit для Node Exporter
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: /etc/systemd/system/node_exporter.service
+    owner: user
+    group: user
+    mode: '0644'
+  notify: Restart node_exporter
+
+- name: Включить и запустить Node Exporter
+  ansible.builtin.systemd:
+    name: node_exporter
+    state: started
+    enabled: yes

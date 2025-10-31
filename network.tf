@@ -49,6 +49,24 @@ resource "yandex_vpc_security_group" "bastion" {
     v4_cidr_blocks = ["0.0.0.0/0"]
     port           = 22
   }
+  ingress {
+    description    = "Allow external access to prometheus proxy"
+    protocol       = "TCP"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    port           = 29090
+  }
+  ingress {
+    description    = "Allow external access to Grafana proxy"
+    protocol       = "TCP"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    port           = 29091
+  }
+  ingress {
+    description    = "Allow external access to Kibana proxy"
+    protocol       = "TCP"
+    v4_cidr_blocks = ["0.0.0.0/0"]
+    port           = 29092
+  }
   egress {
     description    = "Permit ANY"
     protocol       = "ANY"

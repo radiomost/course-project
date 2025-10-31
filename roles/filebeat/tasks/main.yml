@@ -1,0 +1,34 @@
+---
+- name: Установить зависимости для dpkg
+  ansible.builtin.apt:
+    name: [apt-transport-https, software-properties-common]
+    state: present
+    update_cache: yes
+
+- name: Скопировать локальный пакет Filebeat на сервер
+  ansible.builtin.copy:
+    src: filebeat-9.2.0-amd64.deb
+    dest: /tmp/filebeat-9.2.0-amd64.deb
+    mode: '0644'
+
+- name: Установить Filebeat через dpkg
+  ansible.builtin.apt:
+    deb: /tmp/filebeat-9.2.0-amd64.deb
+    state: present
+
+# --- Конфигурация Filebeat ---
+- name: Скопировать конфигурацию Filebeat
+  ansible.builtin.template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart Filebeat
+
+# --- Включить и запустить Filebeat ---
+- name: Включить и запустить службу Filebeat
+  ansible.builtin.systemd:
+    name: filebeat
+    enabled: yes
+    state: started

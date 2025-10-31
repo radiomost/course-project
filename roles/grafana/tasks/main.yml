@@ -1,0 +1,113 @@
+---
+# Установка и настройка Grafana
+
+- name: Установить зависимости для dpkg
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - software-properties-common
+    state: present
+    update_cache: yes
+
+- name: Скопировать локальный пакет Grafana на сервер
+  ansible.builtin.copy:
+    src: grafana-enterprise_12.2.1_18655849634_linux_amd64.deb
+    dest: /tmp/grafana-enterprise_12.2.1_amd64.deb
+    mode: '0644'
+
+- name: Установить Grafana через dpkg
+  ansible.builtin.apt:
+    deb: /tmp/grafana-enterprise_12.2.1_amd64.deb
+    state: present
+
+- name: Создать системного пользователя Grafana (если отсутствует)
+  ansible.builtin.user:
+    name: "{{ grafana_user | default('grafana') }}"
+    shell: /sbin/nologin
+    system: yes
+    create_home: no
+
+- name: Создать директории для Grafana
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ grafana_user | default('grafana') }}"
+    group: "{{ grafana_user | default('grafana') }}"
+    mode: '0755'
+  loop:
+    - /etc/grafana
+    - /var/lib/grafana
+    - /var/log/grafana
+
+- name: Скопировать основной конфиг grafana.ini
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /etc/grafana/grafana.ini
+    owner: "{{ grafana_user | default('grafana') }}"
+    group: "{{ grafana_user | default('grafana') }}"
+    mode: '0644'
+  notify: Restart grafana
+
+- name: Включить и запустить Grafana
+  ansible.builtin.service:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Проверить, что Grafana слушает порт 3000
+  ansible.builtin.wait_for:
+    port: 3000
+    state: started
+    timeout: 30
+
+# --- Настройка источника данных Prometheus ---
+- name: Wait for Grafana API to be available
+  ansible.builtin.uri:
+    url: "http://grafana:3000/api/health"
+    status_code: 200
+    user: "{{ grafana_admin_login }}"
+    password: "{{ grafana_admin_password | default('admin') }}"
+    force_basic_auth: yes
+  register: grafana_health
+  retries: 10
+  delay: 5
+  until: grafana_health.status == 200
+
+- name: Configure Grafana datasource for Prometheus
+  community.grafana.grafana_datasource:
+    name: "Prometheus"
+    ds_type: "prometheus"
+    access: "proxy"
+    ds_url: "http://prometheus:9090"
+    is_default: true
+    tls_skip_verify: true
+    state: present
+    grafana_url: "http://grafana:3000"
+    grafana_user: "{{ grafana_admin_login }}"
+    grafana_password: "{{ grafana_admin_password | default('admin') }}"
+  become: false
+  run_once: true
+
+# --- Импорт дашборда ---
+- name: Copy dashboard JSON to bastion
+  ansible.builtin.copy:
+    src: "{{ role_path }}/files/1860_rev42.json"
+    dest: "/tmp/1860_rev42.json"
+    mode: '0644'
+  delegate_to: bastion
+  run_once: true
+  vars:
+    ansible_user: user
+
+- name: Import Grafana dashboard from file
+  community.grafana.grafana_dashboard:
+    grafana_url: "http://grafana:3000"
+    grafana_user: "{{ grafana_admin_login }}"
+    grafana_password: "{{ grafana_admin_password | default('admin') }}"
+    path: "/tmp/1860_rev42.json"
+    state: present
+  delegate_to: bastion
+  run_once: true
+  become: false
+  vars:
+    ansible_user: user

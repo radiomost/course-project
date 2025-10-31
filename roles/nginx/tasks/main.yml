@@ -15,13 +15,22 @@
     group: www-data
     mode: '0755'
 
-- name: Разместить тестовый index.html
+# - name: Разместить тестовый index.html
+#   ansible.builtin.copy:
+#     dest: /var/www/netlog/index.html
+#     content: "<h1>Welcome to Netlog</h1>"
+#     owner: www-data
+#     group: www-data
+#     mode: '0644'
+
+- name: Скопировать файлы статического сайта
   ansible.builtin.copy:
-    dest: /var/www/netlog/index.html
-    content: "<h1>Welcome to Netlog</h1>"
+    src: templatemo_600_prism_flux/
+    dest: /var/www/netlog/
     owner: www-data
     group: www-data
     mode: '0644'
+  notify: Restart nginx
 
 - name: Скопировать основной nginx.conf
   ansible.builtin.copy:

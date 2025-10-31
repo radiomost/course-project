@@ -117,7 +117,7 @@ resource "yandex_compute_instance" "elastic" {
 
   resources {
     cores         = var.test.cores
-    memory        = 1
+    memory        = 8
     core_fraction = 20
   }
 
@@ -125,7 +125,7 @@ resource "yandex_compute_instance" "elastic" {
     initialize_params {
       image_id = data.yandex_compute_image.ubuntu_2204_lts.image_id
       type     = "network-hdd"
-      size     = 10
+      size     = 20
     }
   }
 
@@ -185,9 +185,11 @@ resource "yandex_compute_instance" "kibana" {
   platform_id = "standard-v3"
   zone        = "ru-central1-a" #зона ВМ должна совпадать с зоной subnet!!!
 
+  allow_stopping_for_update = true
+
   resources {
     cores         = var.test.cores
-    memory        = 1
+    memory        = 4
     core_fraction = 20
   }
 
@@ -249,6 +251,7 @@ resource "yandex_compute_instance" "grafana" {
   }
 }
 
+
 resource "local_file" "inventory" {
   content  = <<-XYZ
   [bastion]
@@ -273,5 +276,5 @@ resource "local_file" "inventory" {
   ansible_ssh_common_args='-o ProxyCommand="ssh -p 22 -W %h:%p -q user@${yandex_compute_instance.bastion.network_interface.0.nat_ip_address}"'
 
   XYZ
-  filename = "./hosts.ini"
+  filename = "./inventory/hosts.ini"
 }

@@ -21,3 +21,16 @@ variable "test" {
     core_fraction = 20
   }
 }
+
+variable "prometheus_db_name" {
+  description = "Name for the Prometheus DB cluster"
+  type        = string
+  default     = "prometheus"
+}
+
+
+variable "prometheus_db_password" {
+  description = "Passwrod for the Prometheus DB cluster"
+  type        = string
+  default     = "prometheus"
+}

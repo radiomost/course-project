@@ -1,4 +1,13 @@
 ---
+- name: Установить часовой пояс на Moscow
+  hosts: all
+  remote_user: user
+  become: true
+  tasks:
+    - name: Настроить часовой пояс
+      ansible.builtin.timezone:
+        name: Europe/Moscow
+
 - name: Установка и настройка Nginx
   hosts: webservers
   remote_user: user
@@ -8,7 +17,7 @@
   vars:
     nginx_conf_src: "netlog.ru.conf"   # значение по умолчанию
 
-  handlers:
+  handlers: 
     - name: Restart nginx
       ansible.builtin.service:
         name: nginx
@@ -30,9 +39,72 @@
         name: nginx
         state: restarted
 
+- name: Установка и настройка Node-Exporter
+  hosts: all
+  remote_user: user
+  become: true
+  roles:
+    - node-exporter
+
+  handlers:
+    - name: Restart node_exporter
+      ansible.builtin.service:
+        name: node_exporter
+        state: restarted
+  
 - name: Установка и настройка Prometheus
   hosts: prometheus
   remote_user: user
   become: true
   roles:
     - prometheus
+
+  handlers:
+    - name: Restart prometheus
+      ansible.builtin.service:
+        name: prometheus
+        state: restarted
+
+- name: Установка и настройка Grafana
+  hosts: grafana
+  become: true
+  roles:
+    - grafana
+
+  handlers:
+    - name: Restart grafana
+      ansible.builtin.service:
+        name: grafana-server
+        state: restarted
+
+
+- name: Установка и настройка Elasticsearch
+  hosts: elastic
+  become: true
+  roles:
+    - elastic
+ 
+  handlers:
+    - name: Restart Elasticsearch
+      ansible.builtin.systemd:
+        name: elasticsearch
+        state: restarted
+
+- name: Установка и настройка Kibana
+  hosts: kibana
+  become: true
+  roles:
+    - kibana
+ 
+  handlers:
+    - name: Restart Kibana
+      ansible.builtin.service:
+        name: kibana
+        state: restarted
+
+- name: Установка и настройка Filebeat
+  hosts: webservers
+  remote_user: user
+  become: true
+  roles:
+    - filebeat

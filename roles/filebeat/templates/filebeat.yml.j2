@@ -1,0 +1,39 @@
+filebeat.inputs:
+  - type: filestream
+    id: nginx-access
+    enabled: true
+    paths:
+      - /var/log/nginx//netlog.access.log
+  - type: filestream
+    id: nginx-error
+    enabled: true
+    paths:
+      - /var/log/nginx/netlog.error.log
+
+# Можно добавить системные логи, если нужно
+# - type: filestream
+#   id: syslog
+#   enabled: true
+#   paths:
+#     - /var/log/syslog
+
+output.elasticsearch:
+  hosts: ["http://{{ hostvars['elastic']['ansible_host'] | default('elastic') }}:9200"]
+  index: "filebeat-%{+yyyy.MM.dd}"
+
+setup.kibana:
+  host: "http://{{ hostvars['kibana']['ansible_host'] | default('kibana') }}:5601"
+
+# По умолчанию security выключена в нашем Elasticsearch
+setup.ilm.enabled: false
+setup.template.enabled: true
+setup.template.name: "filebeat"
+setup.template.pattern: "filebeat-*"
+
+logging:
+  level: info
+  to_files: true
+  files:
+    path: /var/log/filebeat
+    name: filebeat
+    keepfiles: 7

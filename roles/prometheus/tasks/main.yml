@@ -64,6 +64,7 @@
     owner: "{{ prometheus_user }}"
     group: "{{ prometheus_user }}"
     mode: '0644'
+  notify: Restart prometheus
 
 - name: Create systemd unit file for Prometheus
   copy:
