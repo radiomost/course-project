@@ -12,7 +12,7 @@
 - name: Скачать пакет Grafana с удаленного сервера
   ansible.builtin.get_url:
     url: https://www.autokernel.ru/repository/images_raw/grafana/grafana-enterprise_12.2.1_18655849634_linux_amd64.deb
-    dest: /tmp/grafana-enterprise_12.2.1_18655849634_linux_amd64.deb
+    dest: /tmp/grafana-enterprise_12.2.1_amd64.deb
     mode: '0644'
     force: yes   # перезаписывать, если файл уже существует
 
